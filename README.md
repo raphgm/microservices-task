@@ -1,4 +1,4 @@
-```markdown
+
 # Cloud-Native Spring Boot & React Application with CI/CD
 
 This repository contains a cloud-native application built with Spring Boot (backend) and React (frontend), deployed using Azure cloud services and modern DevOps practices. It demonstrates infrastructure as code (IaC), CI/CD pipelines, containerization, and monitoring.
