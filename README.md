@@ -1,4 +1,4 @@
-```markdown
+
 # Cloud-Native Spring Boot & React Application with CI/CD Documentation
 
 ## Project Overview
