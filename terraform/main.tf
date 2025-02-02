@@ -1,152 +1,262 @@
-provider "aws" {
-  region = var.aws_region
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">= 3.0.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = ">= 3.5.1"
+    }
+  }
 }
 
-# Create an EKS Cluster
-resource "aws_eks_cluster" "example" {
-  name     = var.eks_cluster_name
-  role_arn = aws_iam_role.eks_cluster_role.arn
+provider "azurerm" {
+  features {}
+  subscription_id = var.subscription_id
+  client_id       = var.azure_client_id
+  client_secret   = var.azure_client_secret
+  tenant_id       = var.azure_tenant_id
+}
 
-  vpc_config {
-    subnet_ids = [aws_subnet.example1.id, aws_subnet.example2.id]
+data "azurerm_client_config" "current" {}
+
+resource "azurerm_role_assignment" "sp_user_access_admin" {
+  scope                = "/subscriptions/${var.subscription_id}"
+  role_definition_name = "User Access Administrator"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
+resource "azurerm_resource_group" "rg" {
+  name     = "rg-${var.project_name}-${var.environment}"
+  location = var.location
+  tags     = var.tags
+}
+
+resource "azurerm_service_plan" "asp" {
+  name                = "asp-${var.project_name}"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  os_type             = "Linux"
+  sku_name            = "P1v2"
+}
+
+resource "random_string" "suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
+resource "azurerm_linux_web_app" "backend" {
+  name                = "backend-${random_string.suffix.result}"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_service_plan.asp.location
+  service_plan_id     = azurerm_service_plan.asp.id
+  https_only          = true
+  public_network_access_enabled = true
+
+  site_config {
+    always_on = true
+    
+    application_stack {
+        docker_image_name = var.docker_registry_url != "" ? "${trimsuffix(var.docker_registry_url, "/")}/${var.docker_username}/${var.docker_backend_image}" : "${var.docker_username}/${var.docker_backend_image}"
+      docker_registry_url = var.docker_registry_url != "" ? "https://${trimsuffix(var.docker_registry_url, "/")}" : "https://index.docker.io"
+    }
+
+    cors {
+      allowed_origins     = ["*"]
+      support_credentials = false
+    }
+
+    ip_restriction {
+      action      = "Allow"
+      ip_address  = "0.0.0.0/0"
+      name        = "Allow all"
+      priority    = 100
+      headers {
+        x_azure_fdid      = []
+        x_fd_health_probe = []
+        x_forwarded_for   = []
+        x_forwarded_host  = []
+      }
+    }
+
+    scm_ip_restriction {
+      action      = "Allow"
+      ip_address  = "0.0.0.0/0"
+      name        = "Allow all SCM"
+      priority    = 100
+      headers {
+        x_azure_fdid      = []
+        x_fd_health_probe = []
+        x_forwarded_for   = []
+        x_forwarded_host  = []
+      }
+    }
   }
 
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster_AmazonEKSClusterPolicy,
-    aws_iam_role_policy_attachment.eks_cluster_AmazonEKSVPCResourceController,
-  ]
-}
-
-resource "aws_iam_role" "eks_cluster_role" {
-  name = "eks-cluster-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "eks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "eks_cluster_AmazonEKSClusterPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.eks_cluster_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "eks_cluster_AmazonEKSVPCResourceController" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
-  role       = aws_iam_role.eks_cluster_role.name
-}
-
-# Autoscaling Group for EKS Worker Nodes
-resource "aws_eks_node_group" "example" {
-  cluster_name    = aws_eks_cluster.example.name
-  node_group_name = var.eks_node_group_name
-  node_role_arn   = aws_iam_role.eks_node_role.arn
-  subnet_ids      = [aws_subnet.example1.id, aws_subnet.example2.id]
-
-  scaling_config {
-    desired_size = 2
-    max_size     = 5
-    min_size     = 1
+  app_settings = {
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }
 
-  depends_on = [
-    aws_iam_role_policy_attachment.eks_node_AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.eks_node_AmazonEC2ContainerRegistryReadOnly,
-  ]
+  auth_settings {
+    enabled = true
+    default_provider = "AzureActiveDirectory"
+    active_directory {
+      client_id     = var.azure_client_id
+      client_secret = var.azure_client_secret
+    }
+  }
 }
 
-resource "aws_iam_role" "eks_node_role" {
-  name = "eks-node-role"
+resource "azurerm_linux_web_app" "frontend" {
+  name                = "${var.project_name}-frontend-${random_string.suffix.result}"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_service_plan.asp.location
+  service_plan_id     = azurerm_service_plan.asp.id
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
+  site_config {
+    always_on = true
+    application_stack {
+       docker_image_name = var.docker_registry_url != "" ? "${trimsuffix(var.docker_registry_url, "/")}/${var.docker_username}/${var.docker_frontend_image}" : "${var.docker_username}/${var.docker_frontend_image}"
+      docker_registry_url = var.docker_registry_url != "" ? "https://${trimsuffix(var.docker_registry_url, "/")}" : "https://index.docker.io"
+    }
+  }
+}
+
+resource "azurerm_role_assignment" "webapp_contributor" {
+  scope                = azurerm_resource_group.rg.id
+  role_definition_name = "Contributor"
+  principal_id         = azurerm_linux_web_app.backend.identity[0].principal_id
+}
+
+# Assign roles to user groups
+resource "azurerm_role_assignment" "user_roles" {
+  for_each             = toset(["27df6cf9-31dc-4045-84a0-1b241c36d64a"])
+  principal_id         = each.value
+  role_definition_name = "Reader"
+  scope                = azurerm_resource_group.rg.id
+}
+
+# Assign roles to admin groups
+resource "azurerm_role_assignment" "admin_roles" {
+  for_each             = toset(["fe94c441-321d-442a-a76c-92831ea49178"])
+  principal_id         = each.value
+  role_definition_name = "Contributor"
+  scope                = azurerm_resource_group.rg.id
+}
+
+# Create Log Analytics Workspace
+resource "azurerm_log_analytics_workspace" "workspace" {
+  name                = "log-${var.project_name}-${var.environment}"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  sku                = "PerGB2018"
+  retention_in_days  = 30
+  tags               = var.tags
+}
+
+# Enable diagnostic settings for the backend Linux Web App
+resource "azurerm_monitor_diagnostic_setting" "backend_app_diagnostic" {
+  name                       = "backend-app-diagnostic-setting"
+  target_resource_id         = azurerm_linux_web_app.backend.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.workspace.id
+
+  enabled_log {
+    category = "AppServiceHTTPLogs"
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+  }
+}
+
+//Configure autoscale settings for the App Service Plan
+resource "azurerm_monitor_autoscale_setting" "app_service_auto_scale" {
+  name                = "auto-scale-${var.project_name}"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  target_resource_id  = azurerm_service_plan.asp.id
+
+  profile {
+    name = "defaultProfile"
+
+    capacity {
+      default = var.default_instance_count
+      minimum = var.min_instance_count
+      maximum = var.max_instance_count
+    }
+
+    rule {
+      metric_trigger {
+        metric_name        = "CpuPercentage"
+        metric_resource_id = azurerm_service_plan.asp.id
+        time_grain        = "PT1M"
+        statistic         = "Average"
+        time_window       = "PT5M"
+        time_aggregation  = "Average"
+        operator          = "GreaterThan"
+        threshold         = var.scale_up_threshold
       }
-    ]
-  })
+
+      scale_action {
+        direction = "Increase"
+        type      = "ChangeCount"
+        value     = "1"
+        cooldown  = "PT${var.scale_cooldown_minutes}M"
+      }
+    }
+
+    rule {
+      metric_trigger {
+        metric_name        = "CpuPercentage"
+        metric_resource_id = azurerm_service_plan.asp.id
+        time_grain        = "PT1M"
+        statistic         = "Average"
+        time_window       = "PT5M"
+        time_aggregation  = "Average"
+        operator          = "LessThan"
+        threshold         = var.scale_down_threshold
+      }
+
+      scale_action {
+        direction = "Decrease"
+        type      = "ChangeCount"
+        value     = "1"
+        cooldown  = "PT${var.scale_cooldown_minutes}M"
+      }
+    }
+  }
 }
 
-resource "aws_iam_role_policy_attachment" "eks_node_AmazonEKSWorkerNodePolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.eks_node_role.name
-}
+# Create Network Security Group
+resource "azurerm_network_security_group" "app_nsg" {
+  name                = "app-nsg"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
 
-resource "aws_iam_role_policy_attachment" "eks_node_AmazonEC2ContainerRegistryReadOnly" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.eks_node_role.name
-}
+  security_rule {
+    name                       = "AllowHTTPS"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range         = "*"
+    destination_port_range    = "443"
+    source_address_prefix     = "*"
+    destination_address_prefix = "*"
+  }
 
-# Create Multiple Users and Groups
-resource "aws_iam_user" "example_users" {
-  count = 3
-  name  = "example-user-${count.index + 1}"
-}
-
-resource "aws_iam_group" "example_group" {
-  name = "example-group"
-}
-
-resource "aws_iam_group_membership" "example" {
-  name  = "example-group-membership"
-  users = aws_iam_user.example_users[*].name
-  group = aws_iam_group.example_group.name
-}
-
-# Create an RDS Database
-resource "aws_db_instance" "example" {
-  allocated_storage    = 20
-  storage_type         = "gp2"
-  engine               = "mysql"
-  engine_version       = "5.7"
-  instance_class       = var.db_instance_class
-  db_name              = var.db_name
-  username             = var.db_username
-  password             = var.db_password
-  parameter_group_name = "default.mysql5.7"
-  skip_final_snapshot  = true
-}
-
-# Monitoring and Audit Solution (CloudWatch and CloudTrail)
-resource "aws_cloudwatch_log_group" "example" {
-  name = "/aws/eks/example-cluster/logs"
-}
-
-resource "aws_cloudtrail" "example" {
-  name                          = "example-cloudtrail"
-  s3_bucket_name                = aws_s3_bucket.example.id
-  include_global_service_events = true
-}
-
-resource "aws_s3_bucket" "example" {
-  bucket = "example-cloudtrail-bucket"
-  # acl attribute removed as it is deprecated
-}
-
-# VPC and Subnets
-resource "aws_vpc" "example" {
-  cidr_block = var.vpc_cidr_block
-}
-
-resource "aws_subnet" "example1" {
-  vpc_id     = aws_vpc.example.id
-  cidr_block = var.subnet1_cidr_block
-}
-
-resource "aws_subnet" "example2" {
-  vpc_id     = aws_vpc.example.id
-  cidr_block = var.subnet2_cidr_block
+  security_rule {
+    name                       = "AllowHTTP"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range         = "*"
+    destination_port_range    = "80"
+    source_address_prefix     = "*"
+    destination_address_prefix = "*"
+  }
 }

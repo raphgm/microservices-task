@@ -1,15 +1,23 @@
 #!/bin/bash
-set -euxo pipefail
+set -e
 
 # --------------------------
 # 1. Directory and Path Setup
 # --------------------------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_FILE="$SCRIPT_DIR/.env"
-TERRAFORM_DIR="$SCRIPT_DIR/terraform"
+BASE_DIR="/Users/raphaelgab-momoh/Desktop/BV/spring-boot-react-example"
+ENV_FILE="$BASE_DIR/.env"
+TERRAFORM_DIR="$BASE_DIR/terraform"
+BACKEND_DIR="$BASE_DIR/backend"
+FRONTEND_DIR="$BASE_DIR/frontend"
 TFVARS_FILE="$TERRAFORM_DIR/terraform.tfvars"
-BACKEND_DIR="$SCRIPT_DIR/backend"
-FRONTEND_DIR="$SCRIPT_DIR/frontend"
+
+# Validate critical paths
+for path in "$BACKEND_DIR/Dockerfile" "$FRONTEND_DIR/Dockerfile"; do
+    if [ ! -f "$path" ]; then
+        echo "❌ Dockerfile not found: $path"
+        exit 1
+    fi
+done
 
 # ----------------------
 # 2. Validate Environment
@@ -35,7 +43,6 @@ done
 echo "🔄 Loading environment variables..."
 source "$ENV_FILE"
 
-# Validate critical variables
 required_vars=(
   "SUBSCRIPTION_ID" "LOCATION" "PROJECT_NAME"
   "DOCKER_USERNAME" "DOCKER_PASSWORD"
@@ -72,7 +79,7 @@ docker buildx create --use >/dev/null
 build_and_push() {
   local context=$1
   local image_name=$2
-  local log_file="$SCRIPT_DIR/${image_name}-build.log"
+  local log_file="$BASE_DIR/${image_name}-build.log"
   
   echo "📦 Building $image_name..."
   docker buildx build \

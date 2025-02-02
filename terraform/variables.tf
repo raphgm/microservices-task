@@ -1,59 +1,141 @@
-variable "aws_region" {
-  description = "The AWS region to deploy resources in"
+# Azure Configuration
+variable "subscription_id" {
+  description = "Azure subscription ID"
   type        = string
-  default     = "us-west-2"
 }
 
-variable "eks_cluster_name" {
-  description = "The name of the EKS cluster"
+variable "tenant_id" {
+  description = "Azure tenant ID"
   type        = string
-  default     = "myEKSCluster"
 }
 
-variable "eks_node_group_name" {
-  description = "The name of the EKS node group"
+variable "location" {
+  description = "Azure region"
   type        = string
-  default     = "example-node-group"
+  default     = "northeurope"
 }
 
-variable "db_instance_class" {
-  description = "The instance class for the RDS database"
+variable "resource_group_name" {
+  description = "Resource group name"
   type        = string
-  default     = "db.t2.micro"
 }
 
-variable "db_name" {
-  description = "The name of the RDS database"
+# Azure AD Authentication
+variable "azure_client_id" {
+  description = "Azure AD application client ID"
   type        = string
-  default     = "myDbInstance"
 }
 
-variable "db_username" {
-  description = "The username for the RDS database"
+variable "azure_client_secret" {
+  description = "Azure AD application client secret"
   type        = string
-  default     = "admin"
+  sensitive   = true
 }
 
-variable "db_password" {
-  description = "The password for the RDS database"
+variable "azure_tenant_id" {
+  description = "Azure AD tenant ID"
   type        = string
-  default     = "Password123*"
 }
 
-variable "vpc_cidr_block" {
-  description = "The CIDR block for the VPC"
+# Project Settings
+variable "project_name" {
+  description = "Project name"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = "springboot-react"
 }
 
-variable "subnet1_cidr_block" {
-  description = "The CIDR block for the first subnet"
+variable "environment" {
+  description = "Environment (dev/staging/prod)"
   type        = string
-  default     = "10.0.1.0/24"
+  default     = "dev"
 }
 
-variable "subnet2_cidr_block" {
-  description = "The CIDR block for the second subnet"
+# Docker Configuration
+variable "docker_registry_url" {
+  description = "Docker registry URL"
   type        = string
-  default     = "10.0.2.0/24"
+  default     = "docker.io"
+}
+
+variable "docker_registry_username" {
+  description = "Docker registry username"
+  type        = string
+}
+
+variable "docker_registry_password" {
+  description = "Docker registry password"
+  type        = string
+  sensitive   = true
+}
+
+variable "docker_username" {
+  description = "Docker Hub username"
+  type        = string
+  default     = "rdgmh"
+}
+
+variable "docker_backend_image" {
+  description = "Backend Docker image name"
+  type        = string
+  default     = "backend"
+}
+
+variable "docker_frontend_image" {
+  description = "Frontend Docker image name"
+  type        = string
+  default     = "frontend"
+}
+
+variable "docker_image_tag" {
+  description = "Docker image tag"
+  type        = string
+  default     = "latest"
+}
+
+# Auto-scaling Configuration
+variable "default_instance_count" {
+  description = "Default number of instances"
+  type        = number
+  default     = 2
+}
+
+variable "min_instance_count" {
+  description = "Minimum number of instances"
+  type        = number
+  default     = 1
+}
+
+variable "max_instance_count" {
+  description = "Maximum number of instances"
+  type        = number
+  default     = 5
+}
+
+variable "scale_up_threshold" {
+  description = "CPU percentage threshold to scale up"
+  type        = number
+  default     = 75
+}
+
+variable "scale_down_threshold" {
+  description = "CPU percentage threshold to scale down"
+  type        = number
+  default     = 25
+}
+
+variable "scale_cooldown_minutes" {
+  description = "Cooldown period in minutes between scaling actions"
+  type        = number
+  default     = 5
+}
+
+# Resource Tags
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default     = {
+    environment = "dev"
+    project     = "springboot-react"
+    managed_by  = "terraform"
+  }
 }
