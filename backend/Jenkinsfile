@@ -1,0 +1,42 @@
+### Backend Jenkins Pipeline (Jenkinsfile)
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/Abbeyo01/spring-boot-react-example'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'npm test'
+            }
+        }
+
+        stage('Deploy to EC2') {
+            steps {
+                script {
+                    def ec2InstanceId = 'your-ec2-instance-id'
+                    sh "ssh -i your-key.pem ec2-user@${ec2InstanceId} 'cd /var/www/backend && git pull && npm start'"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Backend deployment successful!'
+        }
+        failure {
+            echo 'Backend deployment failed.'
+        }
+    }
+}

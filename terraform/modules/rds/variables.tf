@@ -1,0 +1,10 @@
+variable "engine" {}
+variable "allocated_storage" {}
+variable "username" {}
+variable "password" {}
+variable "db_name" {}
+variable "instance_class" {}
+variable "env_prefix" {}
+variable "my_ip" {}
+variable "vpc_id" {}
+variable "subnet_id" {}

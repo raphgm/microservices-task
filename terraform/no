@@ -1,0 +1,128 @@
+////
+terraform/module/vpc/main.tf
+
+  resource "aws_vpc" "myapp-vpc" {
+  cidr_block = var.vpc_cidr_block
+
+  tags = {
+    Name = "myapp-vpc"
+  }
+}
+
+
+resource "aws_subnet" "public_subnet" {
+  vpc_id                  = var.vpc_id
+  cidr_block              = var.public_subnet_cidr_blocks[0]
+  availability_zone       = "eu-north-1"
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "PublicSubnet"
+  }
+}
+
+resource "aws_subnet" "private_subnet" {
+  vpc_id                  = var.vpc_id
+  cidr_block              = var.private_subnet_cidr_blocks[0]
+  availability_zone       = "eu-north-1"
+  map_public_ip_on_launch = false
+  tags = {
+    Name = "PrivateSubnet"
+  }
+}
+
+resource "aws_default_security_group" "default-sg" {
+  vpc_id = var.vpc_id.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = var.my_ip
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    Name = "default-sg"
+  }
+
+}
+
+output "public_subnet_id" {
+  value = aws_subnet.public_subnet.id
+}
+
+output "private_subnet_id" {
+  value = aws_subnet.private_subnet.id
+}
+
+
+
+provider "aws" {
+  region = "eu-north-1"
+}
+
+#variable "vpc_cidr_block" {}
+#variable "private_subnet_cidr_blocks" {}
+#variable "public_subnet_cidr_blocks" {}
+
+data "aws_availability_zones" "azs" {}
+
+module "myapp-vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.16.0"
+
+  name                = "myapp-vpc"
+  cidr                = var.vpc_cidr_block
+  private_subnets     = var.private_subnet_cidr_blocks
+  public_subnets      = var.public_subnet_cidr_blocks
+  azs                 = data.aws_availability_zones.azs.names
+  enable_nat_gateway  = true
+  single_nat_gateway  = true
+  enable_dns_hostnames = true
+
+  #tags = {
+  #  "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+  #}
+
+  #public_subnet_tags = {
+  #  "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+  #  "kubernetes.io/role/elb"                  = "1"
+  #}
+
+  #private_subnet_tags = {
+  #  "kubernetes.io/cluster/myapp-eks-cluster" = "shared"
+  #  "kubernetes.io/role/internal-elb"         = "1"
+  #}
+}
+
+output "private_subnet_ids" {
+  value = module.myapp-vpc.private_subnets
+}
+
+output "public_subnet_ids" {
+  value = module.myapp-vpc.public_subnets
+}
+
+output "vpc_id" {
+  value = module.myapp-vpc.vpc_id
+}
+
+output "public_subnet_ids" {
+  value = module.myapp-vpc.public_subnets
+}
+
+output "private_subnet_ids" {
+  value = module.myapp-vpc.private_subnets
+}

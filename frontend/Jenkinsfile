@@ -1,0 +1,42 @@
+### Frontend Jenkins Pipeline (Jenkinsfile)
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/Abbeyo01/spring-boot-react-example'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('Deploy to S3') {
+            steps {
+                script {
+                    def s3Bucket = 'your-s3-bucket-name'
+                    sh "aws s3 sync ./build s3://$s3Bucket --delete"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Frontend deployment successful!'
+        }
+        failure {
+            echo 'Frontend deployment failed.'
+        }
+    }
+}
