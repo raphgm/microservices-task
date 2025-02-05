@@ -1,0 +1,9 @@
+#0 building with "priceless_galileo" instance using docker-container driver
+
+#1 [internal] booting buildkit
+#1 pulling image moby/buildkit:buildx-stable-1
+#1 pulling image moby/buildkit:buildx-stable-1 8.9s done
+#1 creating container buildx_buildkit_priceless_galileo0
+#1 creating container buildx_buildkit_priceless_galileo0 1.8s done
+#1 DONE 10.7s
+ERROR: invalid tag "/backend:latest": invalid reference format
