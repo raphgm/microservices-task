@@ -120,7 +120,7 @@ jobs:
 
 ### 1. Repository Setup
 ```bash
-git clone https://github.com/your-org/cloud-native-app.git
+git clone https://github.com/raphgm/microservices-task.git
 cd cloud-native-app
 ```
 
@@ -332,5 +332,3 @@ terraform apply tfplan
    - Event-driven architecture
 
 
-
-This documentation provides a comprehensive guide to the cloud-native application architecture using Docker Hub for container management, demonstrating modern DevOps practices and cloud infrastructure management.
