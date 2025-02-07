@@ -6,4 +6,4 @@
 #1 creating container buildx_buildkit_priceless_galileo0
 #1 creating container buildx_buildkit_priceless_galileo0 1.8s done
 #1 DONE 10.7s
-ERROR: invalid tag "/backend:latest": invalid reference format
+
