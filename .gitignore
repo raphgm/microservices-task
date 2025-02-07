@@ -1,0 +1,98 @@
+# Terraform state files
+terraform.tfstate
+terraform.tfstate.*
+
+# Terraform crash log
+crash.log
+
+# Terraform variable files
+*.tfvars
+*.tfvars.json
+/terraform/variables.tfvars
+
+# Terraform override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform working directory
+.terraform/
+.terraform.lock.hcl
+
+# Ignore editor specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore key pair files
+*.pem
+*.key
+
+# Environment files
+.env
+*.env
+node_modules
+.git
+.DS_Store
+.env.local
+.env.development
+.env.test
+Dockerfile
+docker-compose.yml
+
+# MacOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Build directories
+target/
+build/
+dist/
+node_modules/
+
+# Environment & secrets
+.env
+*.env
+.env.*
+!.env.example
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+*.tfvars
+!example.tfvars
+
+# Docker
+.docker/
+*.log
+.docker-compose.override.yml
+
+# Key files
+*.pem
+*.key
+*.keystore
+*.p12
+
+# Temp files
+*.swp
+*.swo
+*~
