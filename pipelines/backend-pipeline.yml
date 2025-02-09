@@ -1,0 +1,33 @@
+# Backend Pipeline (backend-pipeline.yml)
+trigger:
+- main
+
+stages:
+- stage: Build_Test_Backend
+  jobs:
+  - job: Build_Test
+    steps:
+    - script: mvn clean package
+      displayName: 'Build & Test Backend'
+  
+  - job: Dockerize_Push
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'dockerhub-connection'
+        repository: 'rdgmh/backend'
+        command: 'buildAndPush'
+        Dockerfile: 'backend/Dockerfile'
+        tags: latest
+
+- stage: Deploy_Backend
+  dependsOn: Build_Test_Backend
+  jobs:
+  - deployment: Deploy_Prod
+    environment: 'prod'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: terraform apply -auto-approve
+            displayName: 'Deploy Backend to Azure'

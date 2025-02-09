@@ -1,0 +1,36 @@
+trigger:
+- main
+
+stages:
+- stage: Build_Test_Frontend
+  jobs:
+  - job: Build_Test
+    steps:
+    - script: |
+        cd frontend
+        npm install
+        npm run build
+        npm test
+      displayName: 'Build & Test Frontend'
+
+  - job: Dockerize_Push
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'dockerhub-connection'  # Azure DevOps service connection for Docker Hub
+        repository: 'rdgmh/frontend'
+        command: 'buildAndPush'
+        Dockerfile: 'frontend/Dockerfile'
+        tags: latest
+
+- stage: Deploy_Frontend
+  dependsOn: Build_Test_Frontend
+  jobs:
+  - deployment: Deploy_Prod_Frontend
+    environment: 'prod-frontend'  # environment in Azure DevOps
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: terraform apply -auto-approve -target=azurerm_container_group.frontend
+            displayName: 'Deploy Frontend to Azure'
