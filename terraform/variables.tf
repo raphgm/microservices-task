@@ -185,3 +185,31 @@ variable "sp_object_id" {
   description = "The object ID of the service principal."
   type        = string
 }
+
+resource "azurerm_container_group" "frontend" {
+  name                = "frontend-container-group"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  os_type             = "Linux"
+
+  container {
+    name   = "frontend"
+    image  = "${var.docker_username}/frontend:${var.docker_image_tag}"
+    cpu    = "0.5"
+    memory = "1.5"
+
+    ports {
+      port     = 80
+      protocol = "TCP"
+    }
+
+    environment_variables = {
+      ENVIRONMENT = "production"
+    }
+  }
+
+  tags = {
+    environment = "production"
+    project     = "springboot-react"
+  }
+}
