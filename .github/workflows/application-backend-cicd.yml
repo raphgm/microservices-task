@@ -1,0 +1,49 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-test-deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout Repository
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Java and Maven
+      - name: Set up Java and Maven
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # Step 3: Build and Test Backend
+      - name: Build and Test Backend
+        run: mvn clean install
+
+      # Step 4: Build Docker Image
+      - name: Build Docker Image
+        run: docker build -t ${DOCKER_USERNAME}/backend:${{ github.sha }} -f Dockerfile.backend .
+
+      # Step 5: Push Docker Image to Registry
+      - name: Push Docker Image
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker push ${DOCKER_USERNAME}/backend:${{ github.sha }}
+
+      # Step 6: Deploy Backend to Azure App Service
+      - name: Deploy Backend
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'backend-${{ vars.ENVIRONMENT }}'
+          slot-name: 'production'
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: .
