@@ -1,7 +1,10 @@
-name: Backend Deployment
+name: Backend CI/CD Pipeline
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -12,53 +15,66 @@ env:
   IMAGE_NAME: backend
 
 jobs:
-  deploy:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Log in to Docker Hub
+      - name: Set up Java and Maven
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build and Test Backend
+        run: mvn clean install
+
+  build-and-push:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
-      # Step 3: Set up Azure CLI
-      - name: Set up Azure CLI
-        uses: azure/login@v1
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
         with:
-          creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}", "clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}", "subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}", "tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ github.sha }}
 
-      # Step 4: Configure App Service to use Docker image
-      - name: Configure App Service to use Docker image
-        run: |
-          az webapp config container set \
-            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
-            --name ${{ env.AZURE_WEBAPP_NAME }} \
-            --docker-custom-image-name ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest \
-            --docker-registry-server-url https://docker.io || exit 1
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
 
-      # Step 5: Restart App Service (to apply changes)
-      - name: Restart App Service (to apply changes)
-        run: az webapp restart --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} --name ${{ env.AZURE_WEBAPP_NAME }} || exit 1
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # Cleanup Steps
-      # Step 6: Terminate Orphan Processes
-      - name: Terminate Orphan Processes
-        run: |
-          pkill -f python || true
-          pkill -f az || true
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
-      # Step 7: Clear Azure CLI accounts
-      - name: Clear Azure CLI accounts
-        run: |
-          set +e  # Temporarily disable error checking
-          az account clear
-          set -e  # Re-enable error checking
+      - name: Initialize Terraform
+        run: terraform init
 
-      # Step 8: Final Cleanup
-      - name: Final Cleanup
-        run: |
-          # Ensure no lingering processes remain
-          ps aux | grep -i 'python\|az' || true
+      - name: Apply Terraform Configuration
+        run: terraform apply -auto-approve
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
