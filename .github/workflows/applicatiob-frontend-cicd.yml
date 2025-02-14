@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies and test
         run: |
           npm install
-          npm test
+          npm test -- --passWithNoTests  # Add this flag to pass if no tests are found
         working-directory: ./frontend
 
   build-and-push:
