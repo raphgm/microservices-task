@@ -17,7 +17,7 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: frontend  # Ensure this is the correct path to your frontend
+        working-directory: frontend  
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -33,7 +33,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}  # Token here!
+          password: ${{ secrets.DOCKERHUB_TOKEN }} 
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
