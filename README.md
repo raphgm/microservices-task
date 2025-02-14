@@ -106,9 +106,9 @@ build_and_push() {
   
 
 2. **Deployment Strategy:**
-   - Blue/green deployment for frontend
-   - Canary releases for backend
-   - Environment-specific configuration injection
+   - Backend docker file
+   - frontend dockerile
+   
 
 **Sample Frontend Pipeline:**
 ```yaml
@@ -204,13 +204,10 @@ REACT_APP_ENV=production
 2. **Azure Monitor**
    - Infrastructure metrics (CPU, memory, storage)
    - Alert rules for critical thresholds
-3. **Docker Hub Insights**
-   - Image pull statistics
-   - Vulnerability scan reports
+
 
 ### Audit Controls
 - Terraform state file versioning
-- GitHub Actions audit logs
 - Azure Activity Log integration
 
 ---
@@ -223,7 +220,7 @@ REACT_APP_ENV=production
    - Minimal base images (e.g., `node:18-alpine`)
    - Regular vulnerability scanning
 2. **Secrets Management:**
-   - Azure Key Vault for database credentials
+   - use of Environment Variables 
    - Docker Hub access tokens with limited permissions
 
 ### Network Security
@@ -269,7 +266,7 @@ REACT_APP_ENV=production
    - Geo-redundant storage option
 2. **Infrastructure Recovery:**
    - Terraform state backups to Azure Storage
-   - Pipeline-driven environment recreation
+   
 
 ### Rollback Procedure
 1. **Application Rollback:**
@@ -354,12 +351,19 @@ terraform apply tfplan
 
 ---
 
+## Issues encountered.
+- implementing this project using a MacBook would require that the image be built with reference to the platform
+- building for AWS and changing to Azure will leave deposits of AWS especially when its a mac, windows is always recommended.
+  
+
 ## Project Evolution
 
 ### Future Roadmap
 1. **Multi-cloud Support:**
    - Add AWS/GCP deployment options
-   - Move the application from Azure App Services to AKS 
+   - Move the application from Azure App Services to AKS
+   - Use of Key Vault instead of Environment Variables
+  
 
 2. **Serverless Components:**
    - Azure Functions for background processing
