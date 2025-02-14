@@ -62,6 +62,41 @@ resource "azurerm_app_service_plan" "main" {
 │   │   ├── backend-ci.yml
 │   │   └── infra-cd.yml
 ```
+```
+## Image Push to Container Registry
+
+# ---------------------
+#  Azure Authentication
+# ---------------------
+echo "🔐 Authenticating with Azure..."
+az login --use-device-code --output none
+az account set --subscription "$SUBSCRIPTION_ID"
+
+# ----------------------
+#  Docker Setup
+# ----------------------
+echo "🐳 Authenticating with Docker Hub..."
+echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+# ---------------------
+#  Build Applications
+# ---------------------
+echo "🏗️ Building Docker images..."
+docker buildx create --use >/dev/null
+
+build_and_push() {
+  local context=$1
+  local image_name=$2
+  local log_file="$BASE_DIR/${image_name}-build.log"
+  
+  echo "📦 Building $image_name..."
+  docker buildx build \
+    --platform linux/amd64 \
+    -t "$DOCKER_USERNAME/$image_name:latest" \
+    --push \
+    "$context" > "$log_file" 2>&1
+}
+```
 
 **Key Pipeline Stages:**
 1. **Image Management:**
