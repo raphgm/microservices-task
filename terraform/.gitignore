@@ -22,3 +22,4 @@ terraform.rc
 
 #Not Applicable
 **/terraform/modules/vpc/*
+.github/workflows/frontend-cicd.yml
