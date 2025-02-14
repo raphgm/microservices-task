@@ -1,6 +1,7 @@
 'use strict';
 
 import React from 'react';
+import ReactDOM from 'react-dom';
 import when from 'when';
 import client from './client';
 import follow from './follow';
