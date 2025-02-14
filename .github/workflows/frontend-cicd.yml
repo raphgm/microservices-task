@@ -20,7 +20,6 @@ jobs:
         working-directory: frontend  # Ensure this is the correct path to your frontend
 
   build-and-push:
-   
     runs-on: ubuntu-latest
 
     steps:
