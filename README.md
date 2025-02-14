@@ -224,9 +224,7 @@ REACT_APP_ENV=production
    - Docker Hub access tokens with limited permissions
 
 ### Network Security
-- Azure SQL firewall rules
-- App Service access restrictions
-- TLS 1.2 enforcement
+- deployed an NSG
 
 ---
 
