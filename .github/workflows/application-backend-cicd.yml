@@ -33,7 +33,24 @@ jobs:
             --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
             --name ${{ env.AZURE_WEBAPP_NAME }} \
             --docker-custom-image-name ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest \
-            --docker-registry-server-url https://docker.io
+            --docker-registry-server-url https://docker.io || exit 1
 
       - name: Restart App Service (to apply changes)
-        run: az webapp restart --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} --name ${{ env.AZURE_WEBAPP_NAME }}
+        run: az webapp restart --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} --name ${{ env.AZURE_WEBAPP_NAME }} || exit 1
+
+      # Cleanup Steps
+      - name: Terminate Orphan Processes
+        run: |
+          pkill -f python || true
+          pkill -f az || true
+
+      - name: Clear Azure CLI accounts
+        run: |
+          set +e  # Temporarily disable error checking
+          az account clear
+          set -e  # Re-enable error checking
+
+      - name: Final Cleanup
+        run: |
+          # Ensure no lingering processes remain
+          ps aux | grep -i 'python\|az' || true
