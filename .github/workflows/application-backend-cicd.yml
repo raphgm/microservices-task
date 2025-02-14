@@ -17,10 +17,49 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkoutThe issue is with the Docker login command, which fails due@v3
 
       - name: Log in to Docker Hub
-        run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login --username ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+        run to being run in a non-TTY environment. To resolve this: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login --, adjust the Docker login step to properly handle theusername ${{ secrets.DOCKERHUB_USERNAME }} --password password.
+
+Here is the corrected workflow file:
+
+-stdin
+
+      - name: Set up Azure CLI
+        uses```yaml
+name: Backend Deployment
+
+on:
+  push:
+    branches: azure/login@v1
+        with:
+          creds::
+      - main
+
+env:
+  AZURE_WEBAPP_NAME: backend-${ '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}", "{ vars.PROJECT_NAME }}
+  DOCKERHUB_USERNAME:clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}", ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_PASSWORD: "subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID ${{ secrets.DOCKERHUB_PASSWORD }}
+  IMAGE_NAME: backend
+
+jobs }}", "tenantId":"${{ secrets.AZURE_TENANT_ID }}"}:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+'
+
+      - name: Configure App Service to use Docker image      - name: Checkout code
+        uses: actions/checkout
+        run: |
+          az webapp config container set@v3
+
+      - name: Log in to Docker Hub
+        run \
+            --resource-group ${{ vars.AZURE_RESOURCE: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login --_GROUP }} \
+            --name ${{ env.AZUREusername ${{ secrets.DOCKERHUB_USERNAME }} --password_WEBAPP_NAME }} \
+            --docker-custom-image-stdin
 
       - name: Set up Azure CLI
         uses: azure/login@v1
@@ -36,21 +75,30 @@ jobs:
             --docker-registry-server-url https://docker.io || exit 1
 
       - name: Restart App Service (to apply changes)
-        run: az webapp restart --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} --name ${{ env.AZURE_WEBAPP_NAME }} || exit 1
+        run: az webapp restart-name ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME --resource-group ${{ vars.AZURE_RESOURCE_GROUP }}:latest \
+            --docker-registry-server-url https }} --name ${{ env.AZURE_WEBAPP_NAME }} || exit 1://docker.io || exit 1
 
       # Cleanup Steps
       - name: Terminate Orphan Processes
+
+      - name: Restart App
         run: |
-          pkill -f python || true
+          pkill -f python || Service (to apply changes)
+        run: az webapp true
           pkill -f az || true
 
-      - name: Clear Azure CLI accounts
+      - name: restart --resource-group ${{ vars.AZURE_RESOURCE_GROUP Clear Azure CLI accounts
         run: |
           set +e  # Temporarily disable error checking
-          az account clear
+          az }} --name ${{ env.AZURE_WEBAPP_NAME }} || exit  account clear
           set -e  # Re-enable error checking
 
       - name: Final Cleanup
-        run: |
+        run:1
+
+      # Cleanup Steps
+      - name: Terminate Orphan |
           # Ensure no lingering processes remain
-          ps aux | grep -i 'python\|az' || true
+          Processes
+        run: |
+          pkill -f python || ps aux | grep -i 'python\|az' || true
