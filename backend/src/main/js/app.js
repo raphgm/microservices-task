@@ -1,7 +1,6 @@
 'use strict';
 
 import React from 'react';
-import ReactDOM from 'react-dom';
 import when from 'when';
 import client from './client';
 import follow from './follow';
@@ -455,8 +454,5 @@ class Employee extends React.Component {
     }
 }
 
-ReactDOM.render(
-    <App loggedInManager={document.getElementById('managername').innerHTML} />,
-    document.getElementById('react')
-);
+export default App;
 
