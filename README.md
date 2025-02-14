@@ -30,7 +30,7 @@ This cloud-native solution implements automated CI/CD pipelines and infrastructu
 ### 1. Infrastructure as Code (Terraform)
 **Key Resources:**
 ```terraform
-# database.tf
+# database
 resource "azurerm_mssql_server" "main" {
   name                = "app-db-server"
   resource_group_name = azurerm_resource_group.main.name
@@ -38,7 +38,7 @@ resource "azurerm_mssql_server" "main" {
   version             = "12.0"
 }
 
-# app-service.tf
+# app-service
 resource "azurerm_app_service_plan" "main" {
   name                = "app-service-plan"
   location            = azurerm_resource_group.main.location
@@ -66,8 +66,8 @@ resource "azurerm_app_service_plan" "main" {
 **Key Pipeline Stages:**
 1. **Image Management:**
    - Docker image builds with multi-stage builds
-   - Semantic version tagging (e.g., `1.2.3`, `latest`)
-   - Vulnerability scanning using Trivy
+   - Semantic version tagging ( `latest`)
+  
 
 2. **Deployment Strategy:**
    - Blue/green deployment for frontend
@@ -323,10 +323,8 @@ terraform apply tfplan
 ### Future Roadmap
 1. **Multi-cloud Support:**
    - Add AWS/GCP deployment options
-   - Implement cloud-agnostic storage layer
-2. **Service Mesh Integration:**
-   - Implement Istio for service-to-service communication
-   - Add distributed tracing
-3. **Serverless Components:**
+   - Move the application from Azure App Services to AKS 
+
+2. **Serverless Components:**
    - Azure Functions for background processing
    - Event-driven architecture
