@@ -1,4 +1,4 @@
-# .github/workflows/build.yml
+# .github/workflows/build-test-cicd.yml
 name: Build and Test
 on: [push, pull_request]
 jobs:
@@ -14,15 +14,20 @@ jobs:
         java-version: '11'
     - name: Build with Maven
       run: mvn clean install
+      working-directory: backend
     - name: Run tests
       run: mvn test
+      working-directory: backend
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
         node-version: '14'
     - name: Install dependencies
       run: npm install
+      working-directory: frontend
     - name: Build frontend
       run: npm run build
+      working-directory: frontend
     - name: Run frontend tests
       run: npm test
+      working-directory: frontend
