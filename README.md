@@ -65,6 +65,7 @@ resource "azurerm_app_service_plan" "main" {
 ```
 ## Image Push to Container Registry
 
+This was implemented in accordance with the guide that requires everything to be done automatically and therefor the a script was created to implement this, the snippet below shows part relevant to the image deployment to dockerhub
 # ---------------------
 #  Azure Authentication
 # ---------------------
