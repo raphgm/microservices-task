@@ -4,7 +4,7 @@
   "scripts": {
     "start": "webpack --config webpack.config.js",
     "build": "webpack --mode production",
-    "test": "jest"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "react": "^17.0.2",
