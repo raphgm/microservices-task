@@ -3,7 +3,7 @@ name: Backend CI/CD Pipeline
 on: [push, pull_request]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -37,13 +37,27 @@ jobs:
         run: npm run build
         working-directory: backend  # Ensure this is the correct path to your backend
 
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: frontend  # Ensure this is the correct path to your frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend  # Ensure this is the correct path to your frontend
+
+      - name: Run frontend tests
+        run: npm test
+        working-directory: frontend  # Ensure this is the correct path to your frontend
+
   build-and-push:
-    needs: build-and-test
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          submodules: true  # Ensure submodules are checked out
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -54,9 +68,9 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ./frontend
+          file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/backend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${{ github.sha }}
