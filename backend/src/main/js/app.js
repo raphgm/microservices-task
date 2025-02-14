@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom';
 import when from 'when';
 import client from './client';
 import follow from './follow';
-import stompClient from './websocket-listener';
+import { Client } from '@stomp/stompjs';
 
 const root = '/api';
 
@@ -202,11 +202,18 @@ class App extends React.Component {
 
     componentDidMount() {
         this.loadFromServer(this.state.pageSize);
-        stompClient.register([
-            { route: '/topic/newEmployee', callback: this.refreshAndGoToLastPage },
-            { route: '/topic/updateEmployee', callback: this.refreshCurrentPage },
-            { route: '/topic/deleteEmployee', callback: this.refreshCurrentPage }
-        ]);
+
+        const stompClient = new Client({
+            brokerURL: 'ws://your-broker-url',
+            onConnect: () => {
+                stompClient.subscribe('/topic/newEmployee', this.refreshAndGoToLastPage);
+                stompClient.subscribe('/topic/updateEmployee', this.refreshCurrentPage);
+                stompClient.subscribe('/topic/deleteEmployee', this.refreshCurrentPage);
+            },
+            // Add other configuration options as needed
+        });
+
+        stompClient.activate();
     }
 
     render() {
