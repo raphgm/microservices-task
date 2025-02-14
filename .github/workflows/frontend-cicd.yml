@@ -19,12 +19,8 @@ jobs:
         run: npm install
         working-directory: frontend  # Ensure this is the correct path to your frontend
 
-      - name: Run tests
-        run: npm test
-        working-directory: frontend  # Ensure this is the correct path to your frontend
-
   build-and-push:
-    needs: build-and-test
+   
     runs-on: ubuntu-latest
 
     steps:

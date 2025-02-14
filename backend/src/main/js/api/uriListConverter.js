@@ -1,3 +1,5 @@
+import interceptor from 'rest/interceptor';
+
 define(function() {
 	'use strict';
 
@@ -17,3 +19,5 @@ define(function() {
 	};
 
 });
+
+export default { /* module exports */ };
