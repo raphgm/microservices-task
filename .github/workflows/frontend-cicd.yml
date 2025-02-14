@@ -17,8 +17,7 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: frontend  # Ensure this is the correct path to your frontend
-
+        working-directory: frontend  
   build-and-push:
     runs-on: ubuntu-latest
 
