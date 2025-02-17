@@ -366,3 +366,24 @@ terraform apply tfplan
 2. **Serverless Components:**
    - Azure Functions for background processing
    - Event-driven architecture
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit changes (`git commit -m 'Add feature'`)
+4. Push to branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
+
+---
+
+**Author**: Raphael Gabriels
+**Contact**: raphael@rdgmh.onmicrosoft.com
+**GitHub**: [raphgm](https://github.com/raphgm)
+```
