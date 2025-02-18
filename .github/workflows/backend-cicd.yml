@@ -40,3 +40,10 @@ jobs:
       - name: Run frontend tests
         run: npm test
         working-directory: backend/src/main/js  # Ensure this is the correct path to your frontend
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3  # Ensures Docker Compose is available
+
+      - name: Build with Docker Compose
+        run: docker compose up --build
+        
